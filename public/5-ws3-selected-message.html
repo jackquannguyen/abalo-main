@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>5-ws3-selected-message</title>
+</head>
+
+<body>
+    <h1>5-ws3-selected-message</h1>
+
+    <div id="chat-log"></div>
+
+    <div id="messageDiv">
+        <input id="messageId" type="text" placeholder="Type an Id...">
+        <input id="messageText" type="text" placeholder="Type a message...">
+        <button id="send" type="button">Send</button>
+    </div>
+
+    <p>Client-ID: 123</p>
+
+    <script>
+        const socket = new WebSocket("ws://127.0.0.1:8080");
+
+        socket.onopen = () => {
+            console.log("Connected");
+        };
+
+
+        const testId = "123";
+        socket.onmessage = async (event) => {
+            let receivedData = event.data;
+
+            if (receivedData instanceof Blob) {
+                receivedData = await receivedData.text();
+            }
+
+            try {
+                const receiveMessage = JSON.parse(receivedData);
+
+                if (receiveMessage.id === testId) {
+                    console.log("ID: " + receiveMessage.id);
+                    console.log("Message received: " + receiveMessage.message);
+
+                    document.getElementById("chat-log").innerHTML +=
+                        `<div>${receiveMessage.message}</div>`;
+                } else {
+                    console.log("Ungültige ID");
+                }
+            } catch (error) {
+                console.log("Invalid message format:", receivedData);
+            }
+        };
+
+        socket.onerror = () => {
+            console.log("Error occurred while communicating with the WebSocket server");
+        };
+
+        socket.onclose = () => {
+            console.log("Disconnected from the WebSocket server");
+        };
+
+        document.getElementById("send").addEventListener("click", () => {
+            const id = document.getElementById("messageId").value;
+            const message = document.getElementById("messageText").value;
+
+            const outgoingMessage = { id: id, message: message };
+
+            if (id && message !== "" && socket.readyState === WebSocket.OPEN) {
+                socket.send(JSON.stringify(outgoingMessage));
+                document.getElementById("messageId").value = "";
+                document.getElementById("messageText").value = "";
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>5-ws1-connect</title>
+</head>
+
+<body>
+    <h1>5-ws1-connect</h1>
+
+    <script>
+        const socket = new WebSocket("ws://127.0.0.1:8080");
+
+        socket.onopen = () => {
+            console.log("Connected");
+        };
+
+        socket.onerror = () => {
+            console.log("Error occurred while communicating with the WebSocket server");
+        };
+
+        socket.onclose = () => {
+            console.log("Disconnected from the WebSocket server");
+        };
+    </script>
+</body>
+
+</html>

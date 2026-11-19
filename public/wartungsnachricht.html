@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Wartungsnachricht</title>
+</head>
+
+<body>
+    <h1>Wartungsnachricht</h1>
+
+    <div id="chat-log">
+    </div>
+
+    <div>
+        <button id="send" type="button">Send</button>
+    </div>
+
+    <script>
+        const socket = new WebSocket("ws://127.0.0.1:8080");
+
+        socket.onopen = () => {
+            console.log("Connected");
+        };
+
+        socket.onmessage = async (event) => {
+            let message = event.data;
+            document.getElementById("chat-log").innerHTML += `<div>${message}</div>`;
+        };
+
+        socket.onerror = () => {
+            console.log("Error occurred while communicating with the WebSocket server");
+        };
+
+        socket.onclose = () => {
+            console.log("Disconnected from the WebSocket server");
+        };
+
+        document.getElementById("send").addEventListener("click", () => {
+
+            if (socket.readyState === WebSocket.OPEN) {
+                const message = "In Kürze verbessern wir Abalo für Sie! Nach einer kurzen Pause sind wir wieder für Sie da! Versprochen.";
+                socket.send(message);
+            }
+        });
+    </script>
+</body>
+
+</html>

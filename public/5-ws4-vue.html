@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>5-ws4-vue</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+
+<body>
+    <div id="app">
+        <h1>5-ws4-vue</h1>
+
+        <div>
+            <input v-model="messageInput" type="text" placeholder="Type a message...">
+            <button @click="sendMessage" type="button">Send</button>
+        </div>
+
+        <h2>Empfangene Nachricht:</h2>
+        <div id="chat-log">
+            {{ receivedMessage }}
+        </div>
+    </div>
+
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+
+        createApp({
+            setup() {
+                const messageInput = ref("");
+                const receivedMessage = ref("Noch keine Nachricht empfangen.");
+
+                let socket = null;
+
+                onMounted(() => {
+                    socket = new WebSocket("ws://127.0.0.1:8080");
+
+                    socket.onopen = () => {
+                        console.log("Connected");
+                    };
+
+                    socket.onmessage = async (event) => {
+                        let receivedData = event.data;
+
+                        if (receivedData instanceof Blob) {
+                            receivedData = await receivedData.text();
+                        }
+
+                        receivedMessage.value = receivedData;
+                        console.log("Message received: " + receivedData);
+                    };
+
+                    socket.onerror = () => {
+                        console.log("Error occurred while communicating with the WebSocket server");
+                    };
+
+                    socket.onclose = () => {
+                        console.log("Disconnected from the WebSocket server");
+                    };
+                });
+
+                function sendMessage() {
+                    if (
+                        messageInput.value !== "" &&
+                        socket !== null &&
+                        socket.readyState === WebSocket.OPEN
+                    ) {
+                        socket.send(messageInput.value);
+                        messageInput.value = "";
+                    }
+                }
+
+                return {
+                    messageInput,
+                    receivedMessage,
+                    sendMessage
+                };
+            }
+        }).mount("#app");
+    </script>
+</body>
+
+</html>

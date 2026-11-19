@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="de">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Aufgabe 13 - Verkaufsmeldung</title>
+    <style>
+        body { font-family: Arial, sans-serif; max-width: 640px; margin: 30px auto; }
+        .box { border: 1px solid #ddd; border-radius: 8px; padding: 16px; margin-bottom: 16px; }
+        .note { background: #e8f5e9; border: 1px solid #a5d6a7; padding: 12px; border-radius: 8px; margin: 6px 0; }
+        input { padding: 6px; }
+        button { padding: 6px 12px; cursor: pointer; }
+    </style>
+</head>
+
+<body>
+    <h1>Aufgabe 13 – Verkaufsmeldung</h1>
+
+    <!-- Schritt 1: Ich bin angemeldet. Ich melde meine User-ID beim WebSocket an,
+         damit der Server mir gezielt Nachrichten schicken kann. -->
+    <div class="box">
+        <h3>1) Angemeldet als Nutzer</h3>
+        <label>Meine User-ID:
+            <input id="userId" type="text" value="5">
+        </label>
+        <button id="connectBtn" type="button">Verbinden</button>
+        <p id="status">Noch nicht verbunden.</p>
+    </div>
+
+    <!-- Schritt 2: Verkauf simulieren. Ruft den Webservice POST /api/articles/{id}/sold auf.
+         Laravel schickt die Meldung NUR an den Besitzer des Artikels. -->
+    <div class="box">
+        <h3>2) Verkauf melden</h3>
+        <label>Artikel-ID:
+            <input id="articleId" type="text" value="1">
+        </label>
+        <button id="soldBtn" type="button">Als verkauft melden</button>
+        <p style="color:#666">Tipp: Artikel 1 gehoert Nutzer 5. Nur wer als Nutzer 5
+            verbunden ist, sieht die Meldung.</p>
+    </div>
+
+    <!-- Hier erscheinen die empfangenen Verkaufsmeldungen. -->
+    <div class="box">
+        <h3>Meine Benachrichtigungen</h3>
+        <div id="messages"></div>
+    </div>
+
+    <script>
+        let socket = null;
+
+        // 1) Verbinden + eigene User-ID anmelden
+        document.getElementById("connectBtn").addEventListener("click", () => {
+            const userId = document.getElementById("userId").value.trim();
+
+            socket = new WebSocket("ws://127.0.0.1:8080");
+
+            socket.onopen = () => {
+                // User-ID beim Server registrieren (siehe server.js)
+                socket.send(JSON.stringify({ type: "register", userId: userId }));
+                document.getElementById("status").textContent =
+                    "Verbunden und angemeldet als Nutzer " + userId;
+                console.log("Connected as user " + userId);
+            };
+
+            socket.onmessage = async (event) => {
+                let raw = event.data;
+                if (raw instanceof Blob) {
+                    raw = await raw.text();
+                }
+
+                // Nur JSON-Nachrichten vom Typ "sold" anzeigen.
+                try {
+                    const data = JSON.parse(raw);
+                    if (data.type === "sold") {
+                        console.log("Verkaufsmeldung: " + data.message);
+                        const note = document.createElement("p");
+                        note.className = "note";
+                        note.textContent = String(data.message ?? "");
+                        document.getElementById("messages").append(note);
+                    }
+                } catch (e) {
+                    // andere Nachrichten (z.B. "Connected") ignorieren wir hier
+                }
+            };
+
+            socket.onclose = () => {
+                document.getElementById("status").textContent = "Verbindung getrennt.";
+            };
+        });
+
+        // 2) Verkauf melden -> Webservice aufrufen
+        document.getElementById("soldBtn").addEventListener("click", async () => {
+            const articleId = document.getElementById("articleId").value.trim();
+
+            const response = await fetch(`/api/articles/${articleId}/sold`, {
+                method: "POST",
+                headers: { "Accept": "application/json" }
+            });
+
+            const result = await response.json();
+            console.log("Server-Antwort:", result);
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,18 @@
+ABALO – EDITED SOURCE CODE (ChatGPT review package)
+
+IMPORTANT: This is a copy of the uploaded source, not a modification of your Windows D:\abalo folder or GitHub repo.
+
+Best practice:
+1. Back up your current D:\abalo directory (including your local .env and database).
+2. Extract the *patch* ZIP to D:\abalo using PowerShell (from the ZIP download directory):
+   Expand-Archive -Path .\abalo-fixes-patch.zip -DestinationPath D:\abalo -Force
+3. Do NOT overwrite .env. The patch does not contain .env, .git, vendor or node_modules.
+4. Open D:\abalo\.env and ensure PostgreSQL configuration matches your existing local database.
+5. Run `php artisan migrate` (the new migration hashes legacy sample passwords, without deleting data).
+6. Restart Laravel, Vite and Node.js: php artisan serve ; npm run dev ; node server.js (separate terminals).
+7. Open http://127.0.0.1:8000/login and http://127.0.0.1:8000/demo/offer.
+8. Check git diff; run `php artisan test` with pdo_sqlite enabled before committing.
+
+This changes the DEMO LOGIN workflow: GET /login now displays a login form; POST /login verifies sample user passwords. Two ordinary tabs share a session; use an incognito window for a different user / guest viewer.
+
+Not fully addressed: sold endpoint, production WebSocket authentication, complete XSS audit of other legacy coursework pages, security advisories from dependencies. This remains a learning project.
